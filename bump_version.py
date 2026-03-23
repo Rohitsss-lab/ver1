@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 
 def bump(version, bump_type):
     parts = version.split(".")
