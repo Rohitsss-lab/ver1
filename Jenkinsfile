@@ -61,7 +61,7 @@ pipeline {
                         git checkout -b release/v%NEW_VERSION%
                         git add versions.json package.json
                         git commit -m "chore: bump version to v%NEW_VERSION%"
-                        git remote set-url origin https://%GIT_USER%:%GIT_TOKEN%@github.com/YOUR_USERNAME/repo1.git
+                        git remote set-url origin https://%GIT_USER%:%GIT_TOKEN%@github.com/Rohitsss-lab/var1.git
                         git push origin release/v%NEW_VERSION%
                         git checkout main
                         git merge release/v%NEW_VERSION%
