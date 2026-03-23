@@ -76,7 +76,12 @@ pipeline {
             steps {
                 script {
                     def newVersion = readFile('NEW_VERSION.txt').trim()
-                    echo "Sending ver1 version ${newVersion} to vertotal"
+                    echo "============================================"
+                    echo "NEW VERSION FILE CONTAINS: ${newVersion}"
+                    echo "JOB BEING CALLED: vertotal-pipeline"
+                    echo "REPO_NAME being sent: ver1"
+                    echo "REPO_VERSION being sent: ${newVersion}"
+                    echo "============================================"
                     build job: 'vertotal-pipeline',
                           wait: true,
                           parameters: [
