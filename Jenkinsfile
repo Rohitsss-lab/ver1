@@ -10,7 +10,6 @@ pipeline {
     }
     environment {
         GIT_REPO_URL = 'https://github.com/Rohitsss-lab/ver1.git'
-        IS_DEPLOY    = "${params.DEPLOY_TAG?.trim() ? 'true' : 'false'}"
     }
     stages {
         stage('Clean Workspace') {
@@ -51,7 +50,7 @@ pipeline {
         }
         stage('Run Tests') {
             when {
-                environment name: 'IS_DEPLOY', value: 'false'
+                expression { return params.DEPLOY_TAG == null || params.DEPLOY_TAG.trim() == '' }
             }
             steps {
                 bat 'npm test'
@@ -63,19 +62,19 @@ pipeline {
             }
             steps {
                 script {
-                    def output = bat(
-                        script: '"C:\\Program Files\\Python313\\python.exe" bump_version.py',
-                        returnStdout: true
-                    ).trim()
-                    echo "Python output: ${output}"
-                    // Extract version from output line NEW_VERSION=x.x.x
-                    def lines = output.split('\n')
-                    def versionLine = lines.find { it.startsWith('NEW_VERSION=') }
-                    if (versionLine) {
-                        env.NEW_VERSION = versionLine.replace('NEW_VERSION=', '').trim()
-                    } else {
-                        // Fallback to reading file
-                        env.NEW_VERSION = readFile('NEW_VERSION.txt').trim()
+                    withEnv(["BUMP_TYPE=${params.BUMP_TYPE}"]) {
+                        def output = bat(
+                            script: '"C:\\Program Files\\Python313\\python.exe" bump_version.py',
+                            returnStdout: true
+                        ).trim()
+                        echo "Python output: ${output}"
+                        def lines = output.split('\n')
+                        def versionLine = lines.find { it.trim().startsWith('NEW_VERSION=') }
+                        if (versionLine) {
+                            env.NEW_VERSION = versionLine.trim().replace('NEW_VERSION=', '').trim()
+                        } else {
+                            env.NEW_VERSION = readFile('NEW_VERSION.txt').trim()
+                        }
                     }
                     echo "==========================================="
                     echo "BUMPED VERSION = ${env.NEW_VERSION}"
@@ -88,7 +87,7 @@ pipeline {
         }
         stage('Commit and Push') {
             when {
-                environment name: 'IS_DEPLOY', value: 'false'
+                expression { return params.DEPLOY_TAG == null || params.DEPLOY_TAG.trim() == '' }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -107,15 +106,15 @@ pipeline {
                         git checkout main
                         git merge release/v%NEW_VERSION%
                         git push origin main
-                        git tag v%NEW_VERSION%
-                        git push origin v%NEW_VERSION%
+                        git tag v%NEW_VERSION% || echo "Tag already exists skipping"
+                        git push origin v%NEW_VERSION% || echo "Tag already pushed skipping"
                     '''
                 }
             }
         }
         stage('Deploy') {
             when {
-                environment name: 'IS_DEPLOY', value: 'true'
+                expression { return params.DEPLOY_TAG != null && params.DEPLOY_TAG.trim() != '' }
             }
             steps {
                 echo "==========================================="
