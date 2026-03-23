@@ -4,7 +4,7 @@ const PORT = 3001;
 
 app.get('/', (req, res) => {
   res.json({
-    service: 'repo1',
+    service: 'ver1',
     status: 'running',
     port: PORT
   });
